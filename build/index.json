@@ -1,6 +1,29 @@
 {
   "controls": [
     {
+      "name": "search",
+      "options": {
+        "url": "http://localhost:3001/origoserver/singlesearch",
+        "searchAttribute": "NAMN",
+        "geometryAttribute": "GEOM",
+        "layerNameAttribute": "TYPE",
+        //"idAttribute": "GID",
+        "title": "Adress",
+        "hintText": "Sök adress eller platser...",
+        "autocompletePlacement": "left", //can be search, left or floating (defaults to search),
+        "searchlistOptions": {
+          "placement": "left", //can be search, left or floating, activated by hitting enter (defaults to nothing)
+          "export": true,
+          "exportUrl": "origo-server-url/excelcreator",
+          "exportButtontext": "Exportera lista",
+          "exportFilename": "export.xlsx",
+          "makeSelectionButton": true, //default is false
+          "makeSelectionButtonText": "Använd som urval"
+        }
+      }
+      
+    },
+    {
       "name": "home",
       "options": {
         "zoomOnStart": true
@@ -40,7 +63,7 @@
       "name": "legend",
       "options": {
         "labelOpacitySlider": "Opacity",
-        "useGroupIndication" : true
+        "useGroupIndication": true
       }
     },
     {
@@ -55,6 +78,15 @@
     },
     {
       "name": "measure"
+    },
+    {
+      "name": "editor",
+      "options": {
+        "isActive": false,
+        "autoSave": true,
+        "defaultLayer": "multipolygonlager"
+
+      }
     }
   ],
   "pageSettings": {
@@ -68,6 +100,7 @@
     }
   },
   "projectionCode": "EPSG:3857",
+  //"projectionCode": "EPSG:3006",
   "projectionExtent": [
     -20026376.39,
     -20048966.10,
@@ -113,21 +146,241 @@
     0.5972
   ],
   "featureinfoOptions": {
-    "infowindow": "overlay"
+    "changePointerOnHover": true,
+    "infowindow": "infowindow",
+    //"infowindow": "sidebar",
+    "infowindowOptions": {
+      "export": {
+        "clientExport": {
+          "format": "geojson",
+          "button": {
+            "roundButton": false
+          }
+        }
+      },
+      "listLayout": false,
+      "groupAggregations": [
+        {
+          "layer": "linjelager", // Optional. Name of layer to apply to. If omitted or empty applies to all layers
+          "function": "sum", // Required. Aggregation function. Only "sum" is supported
+          //"scalefactor": 0.01, // Optional. Factor to multiply result with. Defaults to 1
+          "decimals": 2, // Optional. Number of decimals in result. Defaults to 2
+          // Required. Name of attribute to aggregate. If it starts with @ it is a function that is applied to each feature.
+          // Supported functions are @area and @length. 
+          // If no features in a layer has the attribute or the function can not be applied to the feature type (e.g. using @area on line features)
+          // the aggregation is ignored for that layer
+          "attribute": "@length",
+          "label": "Total length" //, // Optional. Text to put before aggregation result. Defaults to function(attribute)
+          //"unit": "dekametrar" // Optional. Text to put after aggregation result. Default to empty
+        },
+        {
+          "layer": "", // Id or name? If empty apply to all
+          "function": "sum",
+          "attribute": "@area",
+          //"useHectare":  false,
+          "label": "Total yta ", //prefix? default to function name?
+          "suffix": " kvadrat" //suffix, default to empty
+        },
+        {
+          "layer": "", // Id or name? If empty apply to all
+          "function": "sum",
+          "attribute": "inten",
+          "decimals": 9,
+          //"scalefactor": 100,
+          "unit": "grejs"
+          //"label": "Total yta", //prefix? default to function name?
+          //"suffix": "kvadrat" //suffix, default to empty
+        }
+      ]
+    }
   },
   "source": {
     "local": {
-      "url": "http://localhost/geoserver/wms"
+      "url": "http://localhost:8008/geoserver/wms"
+    },
+    "local_wfs": {
+      "url": "http://localhost:8008/geoserver/wfs",
+      "workspace": "http://localhost:8008/sf",
+      "prefix": "sf"
     }
+
   },
   "groups": [
     {
       "name": "background",
       "title": "Bakgrundskartor",
       "expanded": true
+    },
+    {
+      "name": "lager",
+      "title": "Da group",
+      "groups": [
+        {
+          "name": "krash",
+          "title": "Krasch boom bang"
+        }
+      ]
     }
   ],
   "layers": [
+    {
+      // "classNa": "a",
+      "name": "WMSigt",
+      "id": "sf:multipolygonlager",
+      "title": "Multipoly",
+      "group": "krash",
+      "source": "local",
+      "type": "WMS",
+      "sourceParams": {
+        "CQL_FILTER": "fritext LIKE '%Vätter%'"
+      },
+      "attributes": [
+        {
+          "name": "fritext"
+        },
+        {
+          "html": "Areal: {{@area(2)}}"
+        }
+      ],
+      //"geometryName": "the_geom",
+      //"geometryType": "MultiPolygon",
+      "visible": false
+      //"drawTools": [ "Polygon", "box" ]
+    },
+    {
+      // "classNa": "b",
+      "name": "sf:multipolygonlager",
+      "title": "MultipolyWFS",
+      "group": "krash",
+      "source": "local_wfs",
+      "type": "WFS",
+      "editable": true,
+      "attributes": [
+        {
+          "name": "fritext",
+          "type": "text"
+        },
+        //{
+        //  "html": "Center: {{@center}}"
+        //},
+        {
+          "name": "state",
+          "type": "text"
+        }
+        //,
+        //{
+        //  "title": "Planlänkar",
+        //  "linktext": "planTexts",
+        //  "url": "planLinks",
+        //  "splitter": ";"
+        //}
+
+      ],
+      "geometryName": "the_geom",
+      "geometryType": "MultiPolygon",
+      "visible": false,
+      "drawTools": [ "Polygon", "box" ] 
+      //,
+      //"attachments": {
+      //  "formTitle": "Attachments",
+      //  //"layerId": "whatever",
+      //  "url": "http://localhost:3001/ngp/attachments/",
+      //  "foreignKey": "fritext",
+      //  "groups": [
+      //    {
+      //      "name": "proto",
+      //      "title": "Protocols",
+      //      "allowedFiles": ".pdf"
+      //    },
+      //    {
+      //      "name": "planer",
+      //      "title": "Planfiler",
+      //      "allowedFiles": ".jpg,.png",
+      //      "linkAttribute": "planLinks",
+      //      "fileNameAttribute": "planTexts"
+
+      //    }
+      //  ]
+      //}
+      //"relatedLayers": [
+      //  {
+      //    "layerName": "entitet_blob",
+      //    "FK": "parent_fid",
+      //    "featureTitle": "name"
+      //    //"promoteAttribs": [
+      //    //  {
+      //    //    "parentName": "responsible",
+      //    //    "html": "<p><b>{{name}},</b>{{org}}</p>"
+      //    //  }
+      //    //]
+      //  }
+      //]
+    },
+    {
+      "name": "sf:entitet_blob",
+      "title": "blobban",
+      "group": "root",
+      "source": "local_wfs",
+      "type": "WFS",
+      //"editable": true,
+      "isTable": true,
+      "strategy": "bbox",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "name": "imgsrc",
+          "type": "image",
+          "maxSize": 50
+        }
+      ]
+      //"geometryName": "the_geom",
+      //"geometryType": "MultiPolygon",
+      //"visible": true,
+      //"drawTools": [ "Polygon", "box" ]
+    },
+    {
+      "name": "sf:linjelager",
+      "title": "Linjärt min käre Watson",
+      "group": "root",
+      "source": "local_wfs",
+      "type": "WFS",
+      "editable": true,
+      "attributes": [
+        {
+          "name": "fritext",
+          "type": "text"
+        },
+        {
+          "name": "inten",
+          "title": "Inten ",
+          "type": "searchList",
+          "config": {
+            "url": "http://localhost:3000/domain/linjer",
+            "valueQueryParameter": "value",
+            //"dynamic": true,
+            "useBackingValue": true,
+            "minChars": 1
+          }
+        },
+        {
+          "html": "Längd: {{@length}}"
+        },
+        {
+          "html": "Center: {{@center}}"
+        }
+      ],
+      "geometryName": "the_geom",
+      "geometryType": "LineString"
+      //"visible": true
+      //"allowedEditOperations": [ "create" ],
+      //"drawTools": [
+      //  "Line",
+      //  {"toolName": "Copy"}
+      //]
+    },
     {
       "name": "origo-cities",
       "title": "Origokommuner",

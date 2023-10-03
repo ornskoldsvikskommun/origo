@@ -13,12 +13,28 @@
 	<link rel="shortcut icon" href="img/png/logo.png">
 </head>
 <body>
-<div id="app-wrapper">
-</div>
-<script src="js/origo.min.js"></script>
-<script type="text/javascript">
-	//Init origo
+	<div id="app-wrapper">
+	</div>
+	<script src="js/origo.js"></script>
+	<script src="http://localhost:9008/build/js/multiselect.js"></script>
+	<script type="text/javascript">
+		//Init origo
+        const alternativeLayers = [
+            {
+                name: 'WMSigt',
+                queryInfoLayers: ['multipolygonlager'],
+                disableFilterHandling: false
+            }
+        ];
 		var origo = Origo('index.json');
-</script>
+        origo.on('load', function (viewer) {
+            const msConfig = {
+				lineBufferFactor: 5,
+				alternativeLayers
+            };
+            var multiselect = Multiselect(msConfig);
+            viewer.addComponent(multiselect);
+        });
+	</script>
 </body>
 </html>
