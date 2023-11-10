@@ -12,13 +12,12 @@ class OSMOfflineSource extends OSMSource {
     const path = new URL(src).pathname;
     const cursor = handleSearch(path);
     cursor.then((currentCursor) => {
-        const imageBuffer = currentCursor.value.file;
-        const imageBlog = new Blob([imageBuffer]);
-        tile.getImage().src = URL.createObjectURL(imageBlog);
-    });
-    cursor.catch(() => {
-        console.log('Image could not be found');
-        //tile.setState(3);
+      const imageBuffer = currentCursor.value.file;
+      const imageBlog = new Blob([imageBuffer]);
+      tile.getImage().src = URL.createObjectURL(imageBlog);
+    }).catch ((e) => {
+        console.log('Image could not be found' + e);
+        tile.setState(3);
     });
   }
 
@@ -87,12 +86,17 @@ const handleSearch = (searchInput) => {
                 const transaction = db.transaction(storeName, 'readonly').objectStore(storeName).openCursor();
                 transaction.onsuccess = (event) => {
                     const cursor = event.target.result;
-                    if (cursor) {
-                        if (cursor.value[storeKey].toLowerCase().includes(searchInput.toLowerCase())) {
-                            resolve(cursor);
-                        }
-                        cursor.continue();
-                    };
+                  if (cursor) {
+                    if (cursor.value[storeKey].toLowerCase().includes(searchInput.toLowerCase())) {
+                      resolve(cursor);
+                    }
+                    cursor.continue();
+                  } else {
+                    const e = new Error('Det blev lite fel');
+                    reject(e);
+                  }
+
+
                 };
                 transaction.onerror = (event) => {
                     reject(event.target.error);
