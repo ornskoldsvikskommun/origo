@@ -152,16 +152,16 @@
       "style": "mask",
       "type": "GEOJSON",
       "visible": true
-    },
-    {
-      "name": "osm",
-      "title": "OpenStreetMap",
-      "group": "background",
-      "queryable": false,
-      "style": "karta_osm",
-      "type": "OSM",
-      "visible": true
-    }
+    }//,
+    // {
+    //   "name": "osm",
+    //   "title": "OpenStreetMap",
+    //   "group": "background",
+    //   "queryable": false,
+    //   "style": "karta_osm",
+    //   "type": "OSM",
+    //   "visible": true
+    // }
   ],
   "styles": {
     "mask": [

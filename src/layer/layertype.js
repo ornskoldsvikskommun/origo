@@ -10,6 +10,7 @@ import wmts from './wmts';
 import agsTile from './agstile';
 import xyz from './xyz';
 import osm from './osm';
+import osmoffline from './OSMOffline';
 import vectortile from './vectortile';
 import feature from './featurelayer';
 
@@ -29,5 +30,6 @@ layerType.XYZ = xyz;
 layerType.OSM = osm;
 layerType.VECTORTILE = vectortile;
 layerType.FEATURE = feature;
+layerType.OSMOFFLINE = osmoffline;
 
 export default layerType;

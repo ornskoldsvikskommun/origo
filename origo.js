@@ -27,6 +27,7 @@ import 'elm-pep';
 import 'pepjs';
 import 'drag-drop-touch';
 import permalink from './src/permalink/permalink';
+import OSMOfflineSource from './src/layer/OSMOfflineSource';
 
 const Origo = function Origo(configPath, options = {}) {
   /** Reference to the returned Component */
@@ -164,5 +165,6 @@ Origo.Utils = Utils;
 Origo.dropdown = dropdown;
 Origo.renderSvgIcon = renderSvgIcon;
 Origo.SelectedItem = SelectedItem;
+Origo.OSMOfflineSource = OSMOfflineSource;
 
 export default Origo;
