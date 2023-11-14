@@ -10,11 +10,11 @@ class OSMOfflineSource extends OSMSource {
 
   myLoader(tile, src) {
     const path = new URL(src).pathname;
-    const cursor = handleSearch(path);
-    cursor.then((currentCursor) => {
-      const imageBuffer = currentCursor.value.file;
-      const imageBlog = new Blob([imageBuffer]);
-      tile.getImage().src = URL.createObjectURL(imageBlog);
+    const result = handleSearch(path);
+    result.then((currentResult) => {
+        const imageBuffer = currentResult.file;
+        const imageBlog = new Blob([imageBuffer]);
+        tile.getImage().src = URL.createObjectURL(imageBlog);
     }).catch ((e) => {
         console.log('Image could not be found' + e);
         tile.setState(3);
@@ -22,16 +22,21 @@ class OSMOfflineSource extends OSMSource {
   }
 
     preload() {
-        const images = ['/16/36167/17769.png', '/16/36180/17772.png', '/16/36180/17767.png', '/6/34/18.png', '/6/35/18.png', '/6/34/19.png', '/6/34/17.png', '/6/33/18.png', '/6/36/18.png', '/16/36167/17769.png'];
+        const images = ["/6/34/18.png", "/6/35/18.png", "/6/34/19.png", "/6/35/19.png", "/6/34/17.png", "/6/35/17.png", "/6/33/18.png", "/6/36/18.png", "/6/33/19.png", "/6/33/17.png", "/6/36/19.png", "/6/34/20.png",
+            "/6/36/17.png", "/6/35/20.png", "/6/34/16.png", "/6/35/16.png", "/6/33/20.png", "/6/32/18.png", "/6/36/20.png", "/6/33/16.png", "/6/32/19.png", "/6/37/18.png", "/6/32/17.png", "/6/36/16.png",
+            "/6/37/19.png", "/6/37/17.png", "/6/32/20.png", "/6/32/16.png", "/6/37/20.png", "/6/37/16.png", "/6/31/18.png", "/6/31/19.png", "/6/31/17.png", "/6/38/18.png", "/6/38/19.png", "/6/38/17.png",
+            "/6/31/20.png", "/6/31/16.png", "/6/38/20.png", "/6/38/16.png", 
+            '/16/36167/17769.png', '/16/36180/17772.png', '/16/36180/17767.png', '/16/36167/17769.png'
+        ];
 
         images.forEach((element) => {
             const url = `https://tile.openstreetmap.org${element}`;
             const blob = fetchBlob(url);
             blob.then((currentBlob) => {
                 handleSubmit(element, currentBlob);
-            })
+            });
         });
-    };
+    }
 }
 
 export default OSMOfflineSource;
@@ -62,7 +67,7 @@ const initIndexedDb = (dbName, stores) => {
 		request.onupgradeneeded = (event) => {
 			stores.forEach((store) => {
 				const objectStore = event.target.result.createObjectStore(store.name, {
-					keyPath: store.keyPath,
+					keyPath: store.keyPath
 				});
 				objectStore.createIndex(store.keyPath, store.keyPath, { unique: true });
 			});
@@ -83,28 +88,25 @@ const clearEntriesFromIndexedDb = () => {
 const handleSearch = (searchInput) => {
     return new Promise((resolve, reject) => {
         try {
-                const transaction = db.transaction(storeName, 'readonly').objectStore(storeName).openCursor();
-                transaction.onsuccess = (event) => {
-                    const cursor = event.target.result;
-                  if (cursor) {
-                    if (cursor.value[storeKey].toLowerCase().includes(searchInput.toLowerCase())) {
-                      resolve(cursor);
-                    }
-                    cursor.continue();
-                  } else {
-                    const e = new Error('Det blev lite fel');
+            const transaction = db.transaction(storeName, 'readonly');
+            const objectStore = transaction.objectStore(storeName);
+
+            const index = objectStore.index(storeKey);
+            const getRequest = index.get(searchInput);
+            getRequest.onsuccess = () => {
+                if (getRequest.result) {
+                    resolve(getRequest.result);
+                } else {
+                    const e = new Error('Hittades inte');
                     reject(e);
-                  }
-
-
-                };
-                transaction.onerror = (event) => {
-                    reject(event.target.error);
-                };
+                }
+            };
+            getRequest.onerror = (event) => {
+                reject(event.target.error);
+            } 
         } catch (error) {
             console.log(error);
         }
-        
     });
 };
 
