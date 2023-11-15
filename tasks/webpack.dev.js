@@ -1,7 +1,8 @@
 const { merge } = require('webpack-merge');
 const common = require('./webpack.common');
+const server = require('./webpack.dev.server');
 
-module.exports = merge(common, {
+module.exports = merge(common, server, {
   output: {
     publicPath: '/js',
     filename: 'origo.js',
@@ -11,11 +12,5 @@ module.exports = merge(common, {
       name: 'Origo'
     }
   },
-  devServer: {
-    static: {
-      directory: './'
-    },
-    port: 9966
-  },
-  devtool: 'eval-cheap-source-map'
+    devtool: 'eval-cheap-source-map'
 });
