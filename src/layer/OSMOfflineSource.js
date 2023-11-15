@@ -81,7 +81,8 @@ const clearEntriesFromIndexedDb = () => {
 	store.clear();
 
 	store.transaction.oncomplete = () => {
-		console.log('files removed');
+        console.log('files removed');
+        window.location.reload();
 	};
 };
 
