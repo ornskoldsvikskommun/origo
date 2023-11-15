@@ -17,7 +17,10 @@ class OSMOfflineSource extends OSMSource {
         tile.getImage().src = URL.createObjectURL(imageBlog);
     }).catch ((e) => {
         console.log('Image could not be found' + e);
-        tile.setState(3);
+        const redBlob = fetchBlob('/img/png/red.png');
+        redBlob.then((currentRedBlob) => {
+            tile.getImage().src = URL.createObjectURL(currentRedBlob);
+        });
     });
   }
 
@@ -25,8 +28,7 @@ class OSMOfflineSource extends OSMSource {
         const images = ["/6/34/18.png", "/6/35/18.png", "/6/34/19.png", "/6/35/19.png", "/6/34/17.png", "/6/35/17.png", "/6/33/18.png", "/6/36/18.png", "/6/33/19.png", "/6/33/17.png", "/6/36/19.png", "/6/34/20.png",
             "/6/36/17.png", "/6/35/20.png", "/6/34/16.png", "/6/35/16.png", "/6/33/20.png", "/6/32/18.png", "/6/36/20.png", "/6/33/16.png", "/6/32/19.png", "/6/37/18.png", "/6/32/17.png", "/6/36/16.png",
             "/6/37/19.png", "/6/37/17.png", "/6/32/20.png", "/6/32/16.png", "/6/37/20.png", "/6/37/16.png", "/6/31/18.png", "/6/31/19.png", "/6/31/17.png", "/6/38/18.png", "/6/38/19.png", "/6/38/17.png",
-            "/6/31/20.png", "/6/31/16.png", "/6/38/20.png", "/6/38/16.png", 
-            '/16/36167/17769.png', '/16/36180/17772.png', '/16/36180/17767.png', '/16/36167/17769.png'
+            "/6/31/20.png", "/6/31/16.png", "/6/38/20.png", "/6/38/16.png"
         ];
 
         images.forEach((element) => {
