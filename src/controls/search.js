@@ -3,7 +3,6 @@ import Point from 'ol/geom/Point';
 import Awesomplete from 'awesomplete';
 import { Component, Element as El, Button, Collapse, CollapseHeader, dom } from '../ui';
 import generateUUID from '../utils/generateuuid';
-import getAttributes from '../getattributes';
 import getCenter from '../geometry/getcenter';
 import getFeature from '../getfeature';
 import mapUtils from '../maputils';
@@ -134,7 +133,8 @@ const Search = function Search(options = {}) {
           let featureWkt;
           let coordWkt;
           if (res.length > 0) {
-            showFeatureInfo(res, layer.get('title'), getAttributes(res[0], layer, map));
+            const featLayerName = layer.get('name');
+            featureInfo.showFeatureInfo({ feature: res, layerName: featLayerName }, { maxZoomLevel });
           } else if (geometryAttribute) {
             // Fallback if no geometry in response
             featureWkt = mapUtils.wktToFeature(data[geometryAttribute], projectionCode);
@@ -144,8 +144,7 @@ const Search = function Search(options = {}) {
         });
     } else if (geometryAttribute && layerName) {
       feature = mapUtils.wktToFeature(data[geometryAttribute], projectionCode);
-      layer = viewer.getLayer(data[layerName]);
-      showFeatureInfo([feature], layer.get('title'), getAttributes(feature, layer, map));
+      featureInfo.showFeatureInfo({ feature: [feature], layerName }, { maxZoomLevel });
     } else if (titleAttribute && contentAttribute && geometryAttribute) {
       feature = mapUtils.wktToFeature(data[geometryAttribute], projectionCode);
 
@@ -312,6 +311,8 @@ const Search = function Search(options = {}) {
 
   function initAutocomplete() {
     const input = document.getElementsByClassName('o-search-field')[0];
+    const mapEl = viewer.getMap().getTargetElement();
+    const listHeight = mapEl.offsetHeight / 2;
 
     awesomplete = new Awesomplete('.o-search-field', {
       minChars: minLength,
@@ -324,6 +325,7 @@ const Search = function Search(options = {}) {
         return suggestionValue.toLowerCase().includes(userInput.toLowerCase()) ? suggestionValue : false;
       }
     });
+    awesomplete.ul.style.maxHeight = `${listHeight}px`;
 
     const handler = function func(list) {
       awesomplete.list = list;
@@ -361,7 +363,7 @@ const Search = function Search(options = {}) {
                     .then((res) => {
                       if (res.length > 0) {
                         const featLayerName = layer.get('name');
-                        featureInfo.showFeatureInfo({ feature: res, layerName: featLayerName });
+                        featureInfo.showFeatureInfo({ feature: res, layerName: featLayerName }, { maxZoomLevel });
                       }
                     });
                 });
@@ -389,7 +391,7 @@ const Search = function Search(options = {}) {
                     .then((res) => {
                       if (res.length > 0) {
                         const featureLayerName = layer.get('name');
-                        featureInfo.showFeatureInfo({ feature: res, layerName: featureLayerName });
+                        featureInfo.showFeatureInfo({ feature: res, layerName: featureLayerName }, { maxZoomLevel });
                       }
                     });
                 });

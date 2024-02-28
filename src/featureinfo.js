@@ -38,6 +38,7 @@ const Featureinfo = function Featureinfo(options = {}) {
   let popup;
   let viewer;
   let selectionManager;
+  let textHtmlHandler;
   /** The featureinfo component itself */
   let component;
 
@@ -294,6 +295,10 @@ const Featureinfo = function Featureinfo(options = {}) {
       });
       el.setAttribute('onClickModal', 'true');
     }
+  };
+
+  const addTextHtmlHandler = function addTextHtmlHandler(func) {
+    textHtmlHandler = func;
   };
 
   /**
@@ -601,13 +606,19 @@ const Featureinfo = function Featureinfo(options = {}) {
   };
 
   /**
-  * Shows the featureinfo popup/sidebar/infowindow for the provided feature and fit the view to it.
-  * @param {any} featureObj An object containing layerName and feature
+  * Shows the featureinfo popup/sidebar/infowindow for the provided features and fit the view to it.
+  * @param {any} featureObj An object containing layerName and feature. "feature" is either one Feature or an Array of Feature
   * @param {any} opts An object containing options. Supported options are : coordinate, the coordinate where popup will be shown. If omitted first feature is used.
   *                                                                         ignorePan, do not autopan if type is overlay. Pan should be supressed if view is changed manually to avoid contradicting animations.
+  *                                                                         maxZoomLevel, max level for zooming on feature.
   * @returns nothing
   */
-  const showFeatureInfo = function showFeatureInfo(featureObj, opts = { ignorePan: true }) {
+  const showFeatureInfo = function showFeatureInfo(featureObj, opts) {
+    const thisOpts = { ...{
+      ignorePan: true
+    },
+    ...opts };
+
     const newItems = [];
     const layerName = featureObj.layerName;
     const layer = viewer.getLayer(layerName);
@@ -623,8 +634,8 @@ const Featureinfo = function Featureinfo(options = {}) {
       newItems.push(newItem);
     }
     if (newItems.length > 0) {
-      render(newItems, identifyTarget, opts.coordinate || maputils.getCenter(newItems[0].getFeature().getGeometry()), opts);
-      viewer.getMap().getView().fit(maputils.getExtent(featureObj.feature));
+      render(newItems, identifyTarget, thisOpts.coordinate || maputils.getCenter(newItems[0].getFeature().getGeometry()), thisOpts);
+      viewer.getMap().getView().fit(maputils.getExtent(newItems.map(i => i.getFeature())), { maxZoom: thisOpts.maxZoomLevel });
     }
   };
 
@@ -634,7 +645,6 @@ const Featureinfo = function Featureinfo(options = {}) {
     const pixel = evt.pixel;
     const map = viewer.getMap();
     const coordinate = evt.coordinate;
-    const layers = viewer.getQueryableLayers();
     const clientResult = getFeatureInfo.getFeaturesAtPixel({
       coordinate,
       clusterFeatureinfoLevel,
@@ -646,10 +656,9 @@ const Featureinfo = function Featureinfo(options = {}) {
     if (clientResult !== false) {
       getFeatureInfo.getFeaturesFromRemote({
         coordinate,
-        layers,
         map,
         pixel
-      }, viewer)
+      }, viewer, textHtmlHandler)
         .then((data) => {
           const serverResult = data || [];
           const result = serverResult.concat(clientResult);
@@ -692,6 +701,7 @@ const Featureinfo = function Featureinfo(options = {}) {
     getSelectionLayer,
     getSelection,
     addAttributeType,
+    addTextHtmlHandler,
     onAdd(e) {
       // Keep a reference to "ourselves"
       component = this;
