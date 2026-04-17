@@ -3,6 +3,15 @@
 import VectorSource from 'ol/source/Vector';
 import GeoJSONFormat from 'ol/format/GeoJSON';
 import * as LoadingStrategy from 'ol/loadingstrategy';
+import { unByKey } from 'ol/Observable';
+import { easeOut } from 'ol/easing';
+import CircleStyle from 'ol/style/Circle';
+import Stroke from 'ol/style/Stroke';
+import Style from 'ol/style/Style';
+import { getVectorContext } from 'ol/render';
+
+const duration = 3000;
+
 
 const RETRY_DELAY = 250;
 /** Class that represents a OGC Features API source. Supports real time updates
@@ -45,6 +54,9 @@ class FeaturesApiSource extends VectorSource {
     this._viewer = viewer;
 
     super.setLoader(this.onLoad);
+    this.on('addfeature', (e) => {
+      this.flash(e.feature);
+    });
   }
 
   /**
@@ -196,6 +208,8 @@ class FeaturesApiSource extends VectorSource {
       // hiding layer.
       if (event.code !== 1000) {
         console.error('Closing ', event);
+        // TODO: Handle error code if server used a code to indicate that session has expired
+        // and force a full reconnect even if policy is 'stream'
         this.onWsError(event);
       }
     });
@@ -291,6 +305,43 @@ class FeaturesApiSource extends VectorSource {
           this._ws.close(1000, 'Layer hidden');
           this._ws = null;
         }
+    }
+  }
+
+  flash(feature) {
+    const start = Date.now();
+    const flashGeom = feature.getGeometry().clone();
+    const v = this._viewer;
+
+    const listenerKey = v.getLayers()[0].on('postrender', animate);
+
+    function animate(event) {
+      const frameState = event.frameState;
+      const elapsed = frameState.time - start;
+      if (elapsed >= duration) {
+        unByKey(listenerKey);
+        return;
+      }
+      const vectorContext = getVectorContext(event);
+      const elapsedRatio = elapsed / duration;
+      // radius will be 5 at start and 30 at end.
+      const radius = easeOut(elapsedRatio) * 25 + 5;
+      const opacity = easeOut(1 - elapsedRatio);
+
+      const style = new Style({
+        image: new CircleStyle({
+          radius,
+          stroke: new Stroke({
+            color: `rgba(255, 0, 0, ${opacity})`,
+            width: 0.25 + opacity
+          })
+        })
+      });
+
+      vectorContext.setStyle(style);
+      vectorContext.drawGeometry(flashGeom);
+      // tell OpenLayers to continue postrender animation
+      v.getMap().render();
     }
   }
 }

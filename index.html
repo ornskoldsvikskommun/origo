@@ -16,9 +16,30 @@
 <div id="app-wrapper">
 </div>
 <script src="js/origo.js"></script>
+<script src="http://localhost:9008/build/js/multiselect.js"></script>
 <script type="text/javascript">
+
+
 	//Init origo
 		var origo = Origo('index.json');
+      origo.on('load', function (viewer) {
+        const msConfig = {
+          lineBufferFactor: 5,
+		  currentLayerConfig: 1,
+		  selectableLayers :[
+			{
+                name: 'Alla synliga'
+            },
+			{
+				name: "Brukare",
+				layers: ["brukare"]
+			}
+		  ]
+        };
+        var multiselect = Multiselect(msConfig);
+        viewer.addComponent(multiselect);
+	
+      });
 </script>
 </body>
 </html>

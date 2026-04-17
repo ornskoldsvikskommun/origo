@@ -22,6 +22,26 @@
       "name": "print"
     },
     {
+"name": "draw",
+"options" : {
+  "buttonText": "Rita",
+  "drawTools": {
+     "Polygon": ["freehand", "box"],
+     "LineString": ["freehand"]
+  },
+  "showAttributeButton": true,
+  "showDownloadButton": true,
+  "showSaveButton": true,
+  "multipleLayers": true,
+  "queryable": false,
+  "removable": true,
+  "exportable": true,
+  "layerTitle": "Ritlager",
+  "groupTitle": "Ritlåda",
+  "groupName": "rit"
+}
+    },
+    {
       "name": "about",
       "options": {
         "buttonText": "Om Origo",
@@ -56,6 +76,19 @@
     {
       "name": "measure"
     }
+    ,
+    {
+      "name": "editor",
+      "options": {
+        "isActive": false,
+        "autoSave": true,
+        "defaultLayer": "brukare",
+        "traceStyle": "tracehighlight",
+        "snapTolerance": 5,
+        "snap": true,
+        "trace": true
+      }
+    }
   ],
   "pageSettings": {
     "footer": {
@@ -80,16 +113,20 @@
       "projection": "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
     }
   ],
-  "extent": [
-    -20026376.39,
-    -20048966.10,
-    20026376.39,
-    20048966.10
+  // "extent": [
+  //   -20026376.39,
+  //   -20048966.10,
+  //   20026376.39,
+  //   20048966.10
+  // ],
+
+  "extent" :[
+    2039321, 9155583, 2075689, 9175253
   ],
-  "center": [
-    1810000,
-    8390000
-  ],
+  // "center": [
+  //   1810000,
+  //   8390000
+  // ],
   "zoom": 5.7,
   "resolutions": [
     156543.03,
@@ -113,11 +150,29 @@
     0.5972
   ],
   "featureinfoOptions": {
-    "infowindow": "overlay"
+    "infowindow": "infowindow",
+    "infowindowOptions" : {
+      "listLayout": true
+    }
   },
   "source": {
     "local": {
       "url": "http://localhost/geoserver/wms"
+    },
+    "realtime": {
+      "url": "http://localhost:3003/featuresapi/"
+      // "projection": "EPSG:3006"
+      // "url": "https://r90va4ep/origo-realtimereference-api/subscribe"
+    },
+    "realtime-ref": {
+      "url": "http://localhost:3004/featuresapi/",
+      "projection": "EPSG:3006"
+      // "url": "https://r90va4ep/origo-realtimereference-api/subscribe"
+    },
+    "local_wfs": {
+      "url": "http://localhost:8008/geoserver/wfs",
+      "workspace": "http://localhost:8008/sf",
+      "prefix": "sf"
     }
   },
   "groups": [
@@ -128,31 +183,235 @@
     }
   ],
   "layers": [
+    // {
+    //   "name": "multipolygonlager",
+    //   "id": "sf:multipolygonlager",
+    //   "title": "MultipolyWFS",
+    //   "group": "root",
+    //   "source": "local_wfs",
+    //   "type": "WFS",
+    //   "editable": true,
+    //   "attributes": [
+
+    //     {
+    //       "title": "Fritext",
+    //       "name": "fritext",
+    //       "type": "text"
+    //     },
+
+    //     {
+    //       "name": "state",
+    //       "type": "text"
+    //     }
+
+
+    //   ],
+    //   "geometryName": "the_geom",
+    //   "geometryType": "MultiPolygon",
+
+    //   "visible": true,
+    //   "strategy": "bbox"
+
+    // },
+    // {
+    //   "name": "linjelager",
+    //   "id": "sf:linjelager",
+    //   "title": "LineWFS",
+    //   "group": "root",
+    //   "source": "local_wfs",
+    //   "type": "WFS",
+    //   "editable": true,
+    //   "attributes": [
+
+    //     {
+    //       "title": "Fritext",
+    //       "name": "fritext",
+    //       "type": "text"
+    //     }
+    //   ],
+    //   "geometryName": "the_geom",
+    //   "geometryType": "LineString",
+
+    //   "visible": true,
+    //   "strategy": "bbox"
+
+    // },
+    // {
+    //   "name": "polygonlager",
+    //   "id": "sf:polygonlager",
+    //   "title": "Polly",
+    //   "group": "root",
+    //   "source": "local_wfs",
+    //   "type": "WFS",
+    //   "editable": true,
+    //   "attributes": [
+
+    //     {
+    //       "title": "Fritext",
+    //       "name": "fritext",
+    //       "type": "text"
+    //     }
+    //   ],
+    //   "geometryName": "geomen",
+    //   "geometryType": "Polygon",
+
+    //   "visible": true,
+    //   "strategy": "bbox"
+
+    // },
+    // {
+    //   "name": "punktlager",
+    //   "id": "sf:punktlager",
+    //   "title": "PointWFS",
+    //   "group": "root",
+    //   "source": "local_wfs",
+    //   "type": "WFS",
+    //   "editable": true,
+    //   "attributes": [
+
+    //     {
+    //       "title": "Fritext",
+    //       "name": "fritext",
+    //       "type": "text"
+    //     }
+    //   ],
+    //   "geometryName": "the_geom",
+    //   "geometryType": "Point",
+
+    //   "visible": true,
+    //   "strategy": "bbox"
+
+    // },
     {
-      "name": "origo-cities",
-      "title": "Origokommuner",
+      "name": "brukare",
+      "id": "sf:person",
+      "title": "Brukare",
       "group": "root",
-      "source": "data/origo-cities-3857.geojson",
-      "style": "origo-logo",
-      "type": "GEOJSON",
+      "style": "person",
+      "source": "local_wfs",
+      "type": "WFS",
+      "editable": true,
+      "zoomToExtent": true,
       "attributes": [
+
         {
-          "name": "name"
+          "title": "Namn",
+          "name": "namn",
+          "type": "text"
+        },
+        {
+          "title": "Behov",
+          "name": "typ",
+          "type": "text"
         }
       ],
+      "geometryName": "the_geom",
+      "geometryType": "Point",
+
+      "visible": true,
+      "strategy": "bbox"
+
+    },
+    //  {
+    //   "name": "realtime linjelager ",
+    //   "id": "linjelager",
+    //   "title": "RealTime Linje",
+    //   "group": "root",
+    //   "source": "realtime-ref",
+    //   "type": "FEATURESAPI",
+    //   "realtime": true,
+    //   "editable": false,
+    //   "attributes": [
+
+    //     {
+    //       "title": "Fritext",
+    //       "name": "fritext",
+    //       "type": "text"
+    //     }
+    //   ],
+    //   "geometryName": "the_geom",
+    //   "geometryType": "LineString",
+
+    //   "visible": true
+
+    // },
+    {
+      "name": "realtime punktlager",
+      "id": "demosituation",
+      "title": "TRV vägsituation",
+      "group": "root",
+      "source": "realtime",
+      "style": "avstangd",
+      "type": "FEATURESAPI",
+      "realtime": true,
+      "editable": false,
+      "queryable": true,
+      "attributes": [
+
+        {
+          "title": "Meddelande",
+          "name": "fritext",
+          "type": "text"
+        }
+      ],
+      "geometryName": "the_geom",
+      "geometryType": "Point",
+
       "visible": true
+
     },
     {
-      "name": "origo-mask",
-      "opacity": 0.25,
-      "title": "origo-mask",
-      "group": "none",
-      "queryable": false,
-      "source": "data/origo-mask-3857.geojson",
+      "name": "realtime polylager",
+      "id": "demoavbrott",
+      "title": "Strömavbrott",
+      "zoomToExtent": true,
+      "group": "root",
       "style": "mask",
-      "type": "GEOJSON",
+      "source": "realtime",
+      "type": "FEATURESAPI",
+      "realtime": true,
+      "editable": false,
+      "queryable": true,
+      // "attributes": [
+
+      //   {
+      //     "title": "Meddelande",
+      //     "name": "fritext",
+      //     "type": "text"
+      //   }
+      // ],
+      "geometryName": "geomen",
+      "geometryType": "Polygon",
+
       "visible": true
+
     },
+    // {
+    //   "name": "origo-cities",
+    //   "title": "Origokommuner",
+    //   "group": "root",
+    //   "source": "data/origo-cities-3857.geojson",
+    //   "style": "origo-logo",
+    //   "type": "GEOJSON",
+    //   "attributes": [
+    //     {
+    //       "name": "name"
+    //     }
+    //   ],
+    //   "visible": true
+    // },
+    // {
+    //   "name": "origo-mask",
+    //   "opacity": 0.25,
+    //   "title": "origo-mask",
+    //   "group": "none",
+    //   "queryable": false,
+    //   "source": "data/origo-mask-3857.geojson",
+    //   "style": "mask",
+    //   "type": "GEOJSON",
+    //   "visible": true
+    // },
+    
     {
       "name": "osm",
       "title": "OpenStreetMap",
@@ -164,15 +423,84 @@
     }
   ],
   "styles": {
+    "avstangd" :
+    [
+      [
+        {
+  "icon": {
+    "size": [64, 64],
+    "src": "img/png/vagstangd.png",
+    "scale" : 0.5,
+    "offsetY": 64
+  },
+  "text": {
+    "font": "Bold 12px Arial",
+    "textAlign": "center",
+    // "offsetX": 10,
+    "offsetY": -20,
+    "text": "{{fritext}}",
+    "fill": {
+      "color": "rgba(0,0,0,1.0)"
+    },
+    "stroke": {
+      "color": "rgba(0,0,0,0.7)",
+      "width": 1
+    }
+  }
+}
+
+      ]
+    ],
+    "person" :
+    [
+      [
+        {
+  "icon": {
+    "size": [32, 32],
+    "src": "img/png/person.png"
+  }
+}
+      ]
+    ],
+    "tracehighlight": [
+      [
+        {
+          "fill": {
+            "color": [ 255, 255, 255, 0.7 ]
+          },
+          "stroke": {
+            "color": [ 255, 255, 0, 0.7 ],
+            "width": 3
+
+          }
+        }
+      ]
+    ],
     "mask": [
       [
         {
           "stroke": {
-            "color": "rgba(0,0,0,1.0)"
+            "color": "rgba(255,0,0,0.8)"
           },
           "fill": {
-            "color": "rgba(0,0,0,1.0)"
+            "color": "rgba(255,0,0,0.1)"
           }
+        },
+        {
+  "text": {
+    "font": "Bold 48px Arial",
+    "textAlign": "center",
+    // "offsetX": 10,
+    // "offsetY": -10,
+    "text": "🗲",
+    "fill": {
+      "color": "rgba(255,0,0,1.0)"
+    },
+    "stroke": {
+      "color": "rgba(255,0,0,0.7)",
+      "width": 2
+    }
+  }
         }
       ]
     ],
