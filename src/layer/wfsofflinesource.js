@@ -84,7 +84,7 @@ export default class WfsOfflineSource extends VectorOfflineSource {
     // Read edits from db
     const transaction = await super.getLocalEdits();
 
-    const postResult = await wfstransaction(transaction, this.options.name, this.viewer, true);
+    const postResult = await wfstransaction(transaction, this.options.name, this.viewer, { supressEvents: true });
     // wfstransaction returns number of sucessfully features, which could be 0 if a deleted feature was already deleted
     // and that should count as sucessful. As javascript will interpret 0 as falsely we must check if no response at all
     // which implies a swallowed exception as wfstransaction does not throw.
