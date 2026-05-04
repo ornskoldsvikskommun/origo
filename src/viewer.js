@@ -186,7 +186,7 @@ const Viewer = function Viewer(targetOption, options = {}) {
   const getStyles = () => styles;
 
   const addStyle = function addStyle(styleName, styleProps) {
-    if (!(styleName in styles)) {
+    if (styleName && !(styleName in styles)) {
       styles[styleName] = styleProps;
     }
   };
@@ -570,7 +570,7 @@ const Viewer = function Viewer(targetOption, options = {}) {
       }));
 
       tileGrid = maputils.tileGrid(tileGridSettings);
-      stylewindow = Stylewindow({ palette, viewer: this, localization: controls.find((control) => control.name === 'localization') });
+      stylewindow = Stylewindow({ palette, viewer: this, localization: controls.find((control) => control.name === 'localization'), extraMarkers: controls.find((control) => control.name === 'draw')?.options?.extraMarkers });
 
       setMap(Map(Object.assign(options, { projection, center, zoom, target: this.getId() })));
 
@@ -594,6 +594,7 @@ const Viewer = function Viewer(targetOption, options = {}) {
           }
 
           featureinfoOptions.viewer = this;
+          featureinfoOptions.localization = controls.find((control) => control.name === 'localization');
 
           selectionmanager = Selectionmanager(featureinfoOptions);
           featureinfo = Featureinfo(featureinfoOptions);
