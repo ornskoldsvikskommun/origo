@@ -12,7 +12,7 @@
             "attachmentsTitle": "Bilagor",
             "attchmentsSaveFirst": "Du måste spara innan du kan lägga till bilagor",
             "audioDelete": "Radera ljud",
-            "audioNoSupport": "Din webbläsare stödjer audio-taggen",
+            "audioNoSupport": "Din webbläsare stödjer inte audio-taggen",
             "badGeometryType": "Fel geometrityp för lagret",
             "boxToolName": "Rektangel",
             "checkboxGroupActivate": "Val för att aktivera",
@@ -55,7 +55,7 @@
             "typeMore": "Skriv mer för att få förslag",
             "undoTooltip": "Ångra",
             "videoDelete": "Ta bort video",
-            "videoNoSupport": "Din webbläsare stödjer video-taggen"
+            "videoNoSupport": "Din webbläsare stödjer inte video-taggen"
         },
         "measure": {
             "layerTitle": "Mätresultat",

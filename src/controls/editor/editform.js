@@ -144,7 +144,7 @@ const createForm = function createForm(obj, opts = {}) {
           <label style="cursor: pointer;" class="hover o-tooltip">
             <span data-tooltip="${localizeFunc('addButton')}"></span>
             <input type="file" name="bildfil" id="${id}" class="o-editor-input o-hidden-fileselector" accept="image/*"${disabled}>
-            <input id="o-add-image-button" style="pointer-events:none;" type="button" class="o-editor-input" aria-label="${localizeFunc('selectFile')}" value="${localizeFunc('imageAdd')}">
+            <input id="o-add-image-button" style="pointer-events:none;" type="button" class="o-editor-input" aria-label="${localizeFunc('selectFile')}" value="${localizeFunc('selectFile')}">
             </span>
           </label>
           <input id="o-delete-image-button" class="${imageClass} o-delete-image-button" type="button" class="o-editor-input" aria-label="${localizeFunc('imageDelete')}" value="${localizeFunc('imageDelete')}"${disabled}>
