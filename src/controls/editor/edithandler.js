@@ -74,6 +74,9 @@ let modifyDrawInteraction;
 let component;
 let defaultSelectionStyle;
 let undoHandler;
+let clearUndoOnLayerChange;
+let clearUndoOnSessionEnd;
+let clearUndoOnToolChange;
 let reuseIds;
 
 function isActive() {
@@ -220,6 +223,24 @@ function getReuseIdsForLayer(layer) {
 function getSnapSources(layers) {
   return layers.map(layer => viewer.getLayer(layer).getSource());
 }
+
+/**
+ * Helper to emit an Event so toolbar can update status of buttons
+ * @param {('edit' | 'undo' | 'redo' | 'clear')} change The change that has happened
+ */
+function emitUndoStackEvent(change) {
+  const stackDepth = undoHandler.getStackDepth();
+  dispatcher.emitUndoStackChange(change, stackDepth.undoDepth, stackDepth.redoDepth);
+}
+
+/**
+ * Clears the undostack and notifies toolbar
+ */
+function clearUndoStack() {
+  undoHandler.clear();
+  emitUndoStackEvent('clear');
+}
+
 /**
  * Saves all features in editStore to server.
  * @returns A promise which is resolved when all features have been saved if the source supports it. Otherwise it is resolved immediately.
@@ -246,6 +267,9 @@ async function saveFeatures() {
     // If the source does not return a promise it is not awaited for in Promise.all, so this is pretty safe.
     promises.push(transactionHandler(transaction, layerName, viewer, { reuseIds: getReuseIdsForLayer(layer) }));
   });
+  if (!autoSave && clearUndoOnSessionEnd) {
+    clearUndoStack();
+  }
   return Promise.all(promises);
 }
 
@@ -271,12 +295,9 @@ function addEditsToEditStore(edits) {
   }
 }
 
-function emitUndoStackEvent(change) {
-  const stackDepth = undoHandler.getStackDepth();
-  dispatcher.emitUndoStackChange(change, stackDepth.undoDepth, stackDepth.redoDepth);
-}
-
-// Undo last operation
+/**
+ * Undo last operation
+ */
 function undo() {
   const edits = undoHandler.undo();
   emitUndoStackEvent('undo');
@@ -284,8 +305,9 @@ function undo() {
   addEditsToEditStore(edits);
 }
 
-// Redo last operation
-
+/**
+ * Redo last operation
+ */
 function redo() {
   const edits = undoHandler.redo();
   emitUndoStackEvent('redo');
@@ -364,13 +386,15 @@ function abortSession() {
       });
     }
   });
-
-  // Add all these reversions to undoStack as one undo-operation, making it possible to undo the abort.
-  if (undoOperations.length) {
+  if (clearUndoOnSessionEnd) {
+    clearUndoStack();
+  } else if (undoOperations.length) {
+    // Add all these reversions to undoStack as one undo-operation, making it possible to undo the abort.
     undoHandler.pushEdits(undoOperations);
-    emitUndoStackEvent('undo');
+    emitUndoStackEvent('edit');
   }
 }
+
 function onModifyEnd(evt) {
   const feature = evt.features.item(0);
   // Roll back modification if the resulting geometry was invalid
@@ -996,6 +1020,9 @@ function setEditLayer(layerName) {
   currentLayer = layerName;
   setAllowedOperations();
   setInteractions();
+  if (clearUndoOnLayerChange) {
+    clearUndoStack();
+  }
 }
 
 function setGeometryProps(layer) {
@@ -2254,6 +2281,15 @@ function preselectFeature(feature) {
 }
 
 /**
+ * Function to call when component becomes inactive.
+ * Great place to clean up stuff.
+ */
+function onDisable() {
+  if (clearUndoOnToolChange) {
+    clearUndoStack();
+  }
+}
+/**
  * Creates the handler Component. In reality only one instance can be created as it relies on global variables and DOM ids and DOM events
  * It isn't a traditional Component as it has no visual elements but it can emit Eventer events.
  * It communicates with the editor toolbar and forms using DOM events.
@@ -2270,6 +2306,11 @@ export default function editHandler(options, v) {
       defaultSelectionStyle = getDefaultSelectStyleFunction();
       undoHandler = new UndoStack({ maxLength: options.maxUndoLevels });
       reuseIds = options.reuseIds;
+      ({
+        clearUndoOnLayerChange,
+        clearUndoOnToolChange,
+        clearUndoOnSessionEnd
+      } = options);
 
       // Set up a layer for displaying trace possibilities. Do it up front as it may become possible to turn it on later
       traceHighligtLayer = new VectorLayer({
@@ -2332,6 +2373,7 @@ export default function editHandler(options, v) {
     preselectFeature,
     undo,
     redo,
-    abortSession
+    abortSession,
+    onDisable
   });
 }
