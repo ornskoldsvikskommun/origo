@@ -44,17 +44,50 @@
       }
     },
     {
+  "name": "localization",
+  "options": {
+    "showLocMenu": true,
+    "localeId": "en-US",
+    "fallbackLocaleId": "en-US"
+  }
+},
+    {
       "name": "position",
       "options": {
         "title": "Web Mercator",
-        "projections": {
-          "EPSG:4326": "WGS84",
-          "EPSG:3006": "Sweref99 TM"
-        }
+        "projections": [
+          {
+            "projectionCode": "EPSG:4326",
+            "projectionLabel": "Wgs84",
+            "precision": 10
+          },
+          {
+            "projectionCode": "EPSG:4326",
+            "projectionLabel": "Wgs84 DMS",
+            "dms": true,
+            "precision": 8
+          }
+        ]
       }
     },
     {
       "name": "measure"
+    },
+    {
+      "name": "editor",
+      "options": {
+        "isActive": true,
+        "autoSave": true,
+        "defaultLayer": "linjelager",
+        "traceStyle": "tracehighlight",
+        "snapTolerance": 5,
+        "snap": true,
+        "trace": true
+        ,
+        "clearUndoOnLayerChange" : true,
+        "clearUndoOnSessionEnd" : true,
+        "clearUndoOnToolChange" : false
+      }
     }
   ],
   "pageSettings": {
@@ -118,6 +151,11 @@
   "source": {
     "local": {
       "url": "http://localhost/geoserver/wms"
+    },
+    "local_wfs": {
+      "url": "http://localhost:8008/geoserver/wfs",
+      "workspace": "http://localhost:8008/sf",
+      "prefix": "sf"
     }
   },
   "groups": [
@@ -128,6 +166,191 @@
     }
   ],
   "layers": [
+    {
+      // This is the child layer
+      "name": "sf:person",
+      "source": "local_wfs",
+      "type": "WFS",
+      "isTable": true,
+      "attributes": [
+        {
+          "title": "Name",
+          "name": "namn",
+          "type": "text"
+        },
+        {
+          "title": "Typ",
+          "name": "typ",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "name": "multipolygonlager",
+      "id": "sf:multipolygonlager",
+      "title": "MultipolyWFS",
+      "group": "root",
+      "source": "local_wfs",
+      "type": "WFS",
+      "editable": true,
+      "attributes": [
+
+        {
+          "title": "Fritext",
+          "name": "fritext",
+          "type": "text"
+        },
+
+        {
+          "name": "state",
+          "type": "text"
+        }
+
+
+      ],
+      "geometryName": "the_geom",
+      "geometryType": "MultiPolygon",
+
+      "visible": true,
+      "strategy": "bbox"
+
+    },
+    {
+      "name": "linjelager",
+      "id": "sf:linjelager",
+      "title": "LineWFS",
+      "group": "root",
+      "source": "local_wfs",
+      "type": "WFS",
+      "editable": true,
+      "allowedEditOperations": [
+        "updateAttributes"
+      ],
+      "attributes": [
+          // {
+          //   "name": "fritext",
+          //   "title": "Tänk fritt: ",
+          //   "type": "checkboxgroup",
+          //   "separator": ";",
+          //   //  "freetextOptionPrefix": "freetext_option:",
+          //   "freetextOptionPrefix": "",
+          //   "freetextOptionValueSeparator": "=",
+          //   "options": [
+          //     {
+          //       "text": "Island",
+          //       "value": "IS"
+          //     },
+          //     {
+          //       "text": "Långtbortistan",
+          //       "value": "LBTQ"
+          //     },
+          //     {
+          //       "value": "UAC"
+          //     },
+          //     {
+          //       "text": "Förgrenade arabemiraten"
+          //     }
+          //     // ,
+          //     // {
+          //     //   "text": "Jag har en egen idé",
+          //     //   "type": "textbox"
+          //     // },
+          //     // {
+          //     //   "text": "En idé till",
+          //     //   "type": "textbox"
+          //     // }
+          //   ]
+          // }
+//        {
+//   "name": "fritext",
+//   "title": "choice: ",
+//   "type": "dropdown",
+//   "options": [
+//       "choice 1",
+//       "choice 2",
+//       "choice 3"
+//   ]
+// }
+{
+  "title" : "Bildfil",
+  "name":"fritext",
+  "type": "image"
+},
+
+// {
+//   "title" :" Drop down you panties Sir William",
+//   "name": "fritext",
+//   "type": "searchList",
+//   "config": {
+//     "minChars": 2,
+//     "maxItems": 5,
+//     "url" :"http://localhost/sdjahsdj",
+//     "dynamic": false
+
+//   }
+  // "list": {
+
+  // }
+// }
+
+        {
+          "title": "Fritext",
+          "name": "fritext",
+          "maxLength": 21,
+          "type": "text"
+        }
+      ],
+      "drawTools": [
+        "Polygon",
+        "Line",
+        "box",
+        {
+          "toolName": "Copy"
+          // ,
+          // "layers": [ "SketchPoly" ],
+          // "groups": [ "drag-and-drop-layers" ]
+        }
+      ],
+      "relatedLayers": [
+        {
+          "layerName": "person",
+          "FK": "parent_fid",
+          "featureTitle": "namn",
+          "promoteAttribs": [
+            {
+              "parentName": "responsible",
+              "html": "<p><b>{{name}},</b>{{org}}</p>"
+            }
+          ]
+        }
+      ],
+      "attachments": {
+        // "formTitle" : "Attachments",
+        "layerId": "entity_blob",
+        "url": "http://localhost:3000/",
+        "groups": [
+          {
+            "name": "proto",
+            "title": "Protocols",
+            "allowedFiles": ".pdf"
+          },
+          {
+            "name": "public",
+            "title": "Public Image",
+            "allowedFiles": ".jpg,.png",
+            "linkAttribute": "pictureLinks",
+            "fileNameAttribute": "pictureTexts"
+
+          }
+        ]
+      },
+      "geometryName": "the_geom",
+      "geometryType": "LineString",
+
+      "visible": true,
+      "strategy": "bbox"
+
+    },
     {
       "name": "origo-cities",
       "title": "Origokommuner",
@@ -164,11 +387,25 @@
     }
   ],
   "styles": {
+    "tracehighlight": [
+      [
+        {
+          "fill": {
+            "color": [ 255, 255, 255, 0.7 ]
+          },
+          "stroke": {
+            "color": [ 255, 255, 0, 0.7 ],
+            "width": 3
+
+          }
+        }
+      ]
+    ],
     "mask": [
       [
         {
           "stroke": {
-            "color": "rgba(0,0,0,1.0)"
+            "color": "rgba(0,255,0,1.0)"
           },
           "fill": {
             "color": "rgba(0,0,0,1.0)"
