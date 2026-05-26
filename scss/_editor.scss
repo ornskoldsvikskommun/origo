@@ -13,7 +13,7 @@
         box-shadow: 0 0 10px rgba(169, 169, 169, 0.5); /* Grey glow */
     }
     // "Hides" the ugly file input so the label can be used instead
-    .o-hidden-fileselector {
+    .o-modal label input[type=file].o-hidden-fileselector {
         opacity: 0;
         width: 1px;
         height:1px;
