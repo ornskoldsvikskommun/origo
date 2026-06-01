@@ -51,7 +51,8 @@ function writeWfsTransaction(transObj, options, reuseIds) {
 function wfsTransaction(transObj, layerName, viewer, opts) {
   const {
     reuseIds,
-    localizeFunc
+    localizeFunc,
+    supressEvents
   } = opts;
   const srsName = viewer.getProjectionCode();
   const layer = viewer.getLayer(layerName);
@@ -73,37 +74,50 @@ function wfsTransaction(transObj, layerName, viewer, opts) {
     viewer.getLogger().createToast({ status: 'danger', message: `${localizeFunc('saveError')}${errorMsg}`, title: localizeFunc('generalErrorTitle') });
   }
 
-  function success(result) {
+  /**
+   * Handles the response from wfs server
+   * @param {string} data The raw response string from wfs server
+   * @returns The deserialized response from the transaction
+   */
+  function success(data) {
+    const result = readResponse(data);
     let feature;
-    if (result.transactionSummary.totalUpdated > 0) {
-      dispatcher.emitChangeFeature({
-        feature: transObj.update,
-        layerName,
-        status: 'finished',
-        action: 'update'
-      });
+    // Send events so editstore can clear edits and reset toolbar.
+    // Events are supressed when wfstransaction is called from code that does not use EditStore or editor toolbar (e.g. offline sync)
+    if (!supressEvents) {
+      // FIXME: If the feature(s) already have been deleted on the server this will result in the edit
+      // being stuck forever in the editstore as the server will respond with 0 features updated.
+      if (result.transactionSummary.totalUpdated > 0) {
+        dispatcher.emitChangeFeature({
+          feature: transObj.update,
+          layerName,
+          status: 'finished',
+          action: 'update'
+        });
+      }
+      // FIXME: If the feature(s) already have been deleted on the server this will result in the edit
+      // being stuck forever in the editstore as the server will respond with 0 features deleted.
+      if (result.transactionSummary.totalDeleted > 0) {
+        dispatcher.emitChangeFeature({
+          feature: transObj.delete,
+          layerName,
+          status: 'finished',
+          action: 'delete'
+        });
+      }
+
+      if (result.transactionSummary.totalInserted > 0) {
+        dispatcher.emitChangeFeature({
+          feature: transObj.insert,
+          layerName,
+          status: 'finished',
+          action: 'insert'
+        });
+      }
     }
-    // FIXME: If the feature(s) already have been deleted on the server this will result in the edit
-    // being stuck forever in the editstore as the server will respond with 0 features deleted.
-    if (result.transactionSummary.totalDeleted > 0) {
-      dispatcher.emitChangeFeature({
-        feature: transObj.delete,
-        layerName,
-        status: 'finished',
-        action: 'delete'
-      });
-    }
-    // FIXME: If the feature(s) already have been deleted on the server this will result in the edit
-    // being stuck forever in the editstore as the server will respond with 0 features updated.
+    // Update feature ids with the server assigned fid
     if (result.transactionSummary.totalInserted > 0) {
       feature = transObj.insert;
-
-      dispatcher.emitChangeFeature({
-        feature: transObj.insert,
-        layerName,
-        status: 'finished',
-        action: 'insert'
-      });
       const insertIds = result.insertIds;
       insertIds.forEach((insertId, index) => feature[index].setId(insertId));
     }
@@ -131,7 +145,7 @@ function wfsTransaction(transObj, layerName, viewer, opts) {
       return nr;
     })
     // This catches (and swallows) errors from parsing response if response is not in fact a wfs response. ErrorReports are handled and
-    // results in a 0 items update.
+    // results in a 'undefined' items update.
     .catch(err => error(err));
 }
 
