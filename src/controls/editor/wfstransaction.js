@@ -5,16 +5,11 @@ const format = new WFSFormat();
 const serializer = new XMLSerializer();
 
 function readResponse(data) {
-  let result;
   if (window.Document && data instanceof Document && data.documentElement && data.documentElement.localName === 'ExceptionReport') {
-    // TODO: replace with logger
-    alert(data.getElementsByTagNameNS('http://www.opengis.net/ows', 'ExceptionText').item(0).textContent);
-  } else {
-    // TODO: this may very well throw if response is anything else than OK or WFS ExceptionReport (e.g. 404, 500 or whatever)
-    result = format.readTransactionResponse(data);
+    // This message comes from wfs response and can't be localized.
+    throw new Error(data.getElementsByTagNameNS('http://www.opengis.net/ows', 'ExceptionText').item(0).textContent);
   }
-
-  return result;
+  return format.readTransactionResponse(data);
 }
 
 function writeWfsTransaction(transObj, options, reuseIds) {
@@ -56,7 +51,7 @@ function writeWfsTransaction(transObj, options, reuseIds) {
 function wfsTransaction(transObj, layerName, viewer, opts) {
   const {
     reuseIds,
-    supressEvents
+    localizeFunc
   } = opts;
   const srsName = viewer.getProjectionCode();
   const layer = viewer.getLayer(layerName);
@@ -74,50 +69,45 @@ function wfsTransaction(transObj, layerName, viewer, opts) {
   const node = writeWfsTransaction(transObj, options, reuseIds);
 
   function error(e) {
-    const errorMsg = e ? (`${e.status} ${e.statusText}`) : '';
-    // TODO: replace with logger
-    alert(`Det inträffade ett fel när ändringarna skulle sparas till servern...
-      ${errorMsg}`);
+    const errorMsg = e instanceof Error ? `<br>${localizeFunc('additionalErrorInformation')}<br><br>${e.message})` : '';
+    viewer.getLogger().createToast({ status: 'danger', message: `${localizeFunc('saveError')}${errorMsg}`, title: localizeFunc('generalErrorTitle') });
   }
 
   function success(result) {
     let feature;
-    if (result) {
-      if (result.transactionSummary.totalUpdated > 0) {
-        dispatcher.emitChangeFeature({
-          feature: transObj.update,
-          layerName,
-          status: 'finished',
-          action: 'update'
-        });
-      }
-      // FIXME: If the feature(s) already have been deleted on the server this will result in the edit
-      // being stuck forever in the editstore as the server will respond with 0 features deleted.
-      if (result.transactionSummary.totalDeleted > 0) {
-        dispatcher.emitChangeFeature({
-          feature: transObj.delete,
-          layerName,
-          status: 'finished',
-          action: 'delete'
-        });
-      }
-      // FIXME: If the feature(s) already have been deleted on the server this will result in the edit
-      // being stuck forever in the editstore as the server will respond with 0 features updated.
-      if (result.transactionSummary.totalInserted > 0) {
-        feature = transObj.insert;
-
-        dispatcher.emitChangeFeature({
-          feature: transObj.insert,
-          layerName,
-          status: 'finished',
-          action: 'insert'
-        });
-        const insertIds = result.insertIds;
-        insertIds.forEach((insertId, index) => feature[index].setId(insertId));
-      }
-    } else {
-      error();
+    if (result.transactionSummary.totalUpdated > 0) {
+      dispatcher.emitChangeFeature({
+        feature: transObj.update,
+        layerName,
+        status: 'finished',
+        action: 'update'
+      });
     }
+    // FIXME: If the feature(s) already have been deleted on the server this will result in the edit
+    // being stuck forever in the editstore as the server will respond with 0 features deleted.
+    if (result.transactionSummary.totalDeleted > 0) {
+      dispatcher.emitChangeFeature({
+        feature: transObj.delete,
+        layerName,
+        status: 'finished',
+        action: 'delete'
+      });
+    }
+    // FIXME: If the feature(s) already have been deleted on the server this will result in the edit
+    // being stuck forever in the editstore as the server will respond with 0 features updated.
+    if (result.transactionSummary.totalInserted > 0) {
+      feature = transObj.insert;
+
+      dispatcher.emitChangeFeature({
+        feature: transObj.insert,
+        layerName,
+        status: 'finished',
+        action: 'insert'
+      });
+      const insertIds = result.insertIds;
+      insertIds.forEach((insertId, index) => feature[index].setId(insertId));
+    }
+    return result;
   }
 
   const header = new Headers();
@@ -131,10 +121,7 @@ function wfsTransaction(transObj, layerName, viewer, opts) {
     .then(res => res.text())
     .then(str => (new window.DOMParser()).parseFromString(str, 'text/xml'))
     .then((data) => {
-      const result = readResponse(data);
-      if (result && !supressEvents) {
-        success(result);
-      }
+      const result = success(data);
       let nr = 0;
       if (result) {
         nr += result.transactionSummary.totalUpdated;
